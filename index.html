@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bio-Inspired Sustainability & Environmental Technologies | MBA Tech</title>
+  
+  <!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Three.js and GSAP via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body class="theme-matte-dark">
+
+  <!-- Subtle Film Grain / Noise Overlay -->
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <!-- Ambient Global Background Canvas -->
+  <canvas id="ambient-particles-canvas" class="ambient-canvas" aria-hidden="true"></canvas>
+
+  <!-- ========================================================= -->
+  <!-- TOP HUD BAR (Always Accessible on Projector)              -->
+  <!-- ========================================================= -->
+  <header class="hud-top-bar" role="banner">
+    <div class="hud-left">
+      <div class="brand-pill">
+        <span class="status-dot pulse-green"></span>
+        <span class="brand-title">BIO-INSPIRED TECH</span>
+        <span class="brand-divider">/</span>
+        <span class="brand-tag">MBA TECH</span>
+      </div>
+      <div class="slide-indicator-pill" id="current-slide-label">
+        01 // HERO
+      </div>
+    </div>
+
+    <!-- Presentation Progress Bar -->
+    <div class="hud-progress-container" aria-label="Presentation progress bar">
+      <div class="hud-progress-bar" id="presentation-progress-bar" style="width: 16.66%;"></div>
+    </div>
+
+    <div class="hud-right">
+      <!-- Hotkeys / Help Trigger -->
+      <button class="hud-btn" id="btn-help" title="Keyboard Shortcuts (?)" aria-label="Keyboard Shortcuts">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span class="btn-label">Help</span>
+      </button>
+
+      <!-- Speaker Notes Trigger -->
+      <button class="hud-btn" id="btn-notes" title="Toggle Presenter Notes (N)" aria-label="Toggle Presenter Notes">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span class="btn-label">Notes</span>
+      </button>
+
+      <!-- Audio Synth Toggle -->
+      <button class="hud-btn" id="btn-audio" title="Toggle Ambient Audio SFX" aria-label="Toggle Ambient Audio SFX">
+        <svg id="icon-audio-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        <svg id="icon-audio-off" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        <span class="btn-label">SFX</span>
+      </button>
+
+      <!-- Reduced Motion Toggle -->
+      <button class="hud-btn" id="btn-reduced-motion" title="Toggle Reduced Motion (M)" aria-label="Toggle Reduced Motion">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/></svg>
+        <span class="btn-label">Motion</span>
+      </button>
+
+      <!-- Fullscreen Toggle -->
+      <button class="hud-btn hud-btn-primary" id="btn-fullscreen" title="Presentation Fullscreen (F)" aria-label="Toggle Fullscreen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        <span class="btn-label">Projector</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================= -->
+  <!-- FLOATING SIDE SLIDE NAVIGATOR                             -->
+  <!-- ========================================================= -->
+  <nav class="floating-nav" aria-label="Slide Navigation">
+    <button class="nav-dot active" data-slide="0" aria-label="Slide 1: Overview">
+      <span class="nav-tooltip">01. Overview</span>
+    </button>
+    <button class="nav-dot" data-slide="1" aria-label="Slide 2: Biomimicry Strategy">
+      <span class="nav-tooltip">02. Biomimicry Strategy</span>
+    </button>
+    <button class="nav-dot" data-slide="2" aria-label="Slide 3: Why Bio-Sustainability">
+      <span class="nav-tooltip">03. Why Bio-Sustainability</span>
+    </button>
+    <button class="nav-dot" data-slide="3" aria-label="Slide 4: Case Study Owl Turbines">
+      <span class="nav-tooltip">04. Case Study: Owl Turbines</span>
+    </button>
+    <button class="nav-dot" data-slide="4" aria-label="Slide 5: Case Study Diatom Filters">
+      <span class="nav-tooltip">05. Case Study: Diatom Filters</span>
+    </button>
+    <button class="nav-dot" data-slide="5" aria-label="Slide 6: Impact & Vision">
+      <span class="nav-tooltip">06. Impact & MBA Tech Vision</span>
+    </button>
+  </nav>
+
+  <!-- ========================================================= -->
+  <!-- PRESENTATION CONTAINER & SLIDES                           -->
+  <!-- ========================================================= -->
+  <main class="presentation-wrapper" id="presentation-deck">
+
+    <!-- ------------------------------------------------------- -->
+    <!-- SLIDE 1: HERO                                           -->
+    <!-- ------------------------------------------------------- -->
+    <section class="slide-section active" id="slide-hero" data-index="0">
+      <div class="slide-inner hero-layout">
+        <div class="hero-content">
+          <div class="meta-tag-row">
+            <span class="tag-crimson">ENVIRONMENTAL TECHNOLOGIES</span>
+            <span class="tag-divider">•</span>
+            <span class="tag-green">3.8B YRS OF EVOLUTION</span>
+          </div>
+
+          <h1 class="hero-title">
+            Bio-Inspired <span class="highlight-green">Sustainability</span><br>
+            &amp; Environmental <span class="highlight-crimson">Technologies</span>
+          </h1>
+
+          <p class="hero-subtitle">
+            Learning Sustainable Solutions from Nature
+          </p>
+
+          <div class="presenter-card">
+            <div class="presenter-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="presenter-info">
+              <div class="presenter-names">Kamaksha Sharma <span class="ampersand">&amp;</span> Mahim Jain</div>
+              <div class="presenter-role">MBA Tech • Cleantech Innovation &amp; Sustainable Strategy</div>
+            </div>
+          </div>
+
+          <div class="hero-actions">
+            <button class="action-btn action-btn-green" id="btn-hero-start">
+              <span>Explore Interactive Model</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+            <div class="keyboard-hint">
+              <kbd>→</kbd> or <kbd>SPACE</kbd> to proceed
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual-col">
+          <!-- 3D Three.js Container: Growing Sapling + Hex Ring -->
+          <div id="hero-three-container" class="three-container">
+            <div class="three-hud-pill">
+              <span class="pulse-green"></span> 3D Biomimetic Model Loaded
+            </div>
+          </div>
+          <!-- Hex Icons Legend Below 3D Viewport -->
+          <div class="hex-legend-dock">
+            <div class="hex-chip" title="Photosynthesis & Solar Capture">
+              <span class="hex-symbol">🌿</span>
+              <span class="hex-text">Leaf // Solar</span>
+            </div>
+            <div class="hex-chip" title="Mechanical Morphology">
+              <span class="hex-symbol">⚙️</span>
+              <span class="hex-text">Gear // Biomechanics</span>
+            </div>
+            <div class="hex-chip" title="Genetic Code & Self-Assembly">
+              <span class="hex-symbol">🧬</span>
+              <span class="hex-text">DNA // Synthesis</span>
+            </div>
+            <div class="hex-chip" title="Fluid Dynamics & Hydrology">
+              <span class="hex-symbol">💧</span>
+              <span class="hex-text">Drop // Hydrology</span>
+            </div>
+            <div class="hex-chip" title="Aerodynamics & Kinetic Energy">
+              <span class="hex-symbol">💨</span>
+              <span class="hex-text">Turbine // Airflow</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------- -->
+    <!-- SLIDE 2: WHAT IS BIO-INSPIRED TECHNOLOGY                -->
+    <!-- ------------------------------------------------------- -->
+    <section class="slide-section" id="slide-what" data-index="1">
+      <div class="slide-inner">
+        <div class="section-header">
+          <div class="section-num">01 // FOUNDATIONS</div>
+          <h2 class="section-title">What is Bio-Inspired Technology?</h2>
+          <p class="section-lead">
+            Developing human technologies by observing how nature solves problems. Nature has evolved efficient, low-energy, sustainable solutions over 3.8 billion years of rigorous evolutionary R&amp;D.
+          </p>
+        </div>
+
+        <!-- 3-Step Biomimicry Flow -->
+        <div class="flow-steps-grid">
+          <div class="step-card" data-step="1">
+            <div class="step-badge">STAGE 01</div>
+            <div class="step-icon-wrap">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/></svg>
+            </div>
+            <h3 class="step-title">1. Observe Nature</h3>
+            <p class="step-desc">
+              Identify high-performance biological mechanisms, micro-structures, and self-regulating metabolic networks in living flora and fauna.
+            </p>
+            <div class="step-footer">
+              <span class="metric-label">Key Focus:</span>
+              <span class="metric-val">Biological Morphology</span>
+            </div>
+          </div>
+
+          <div class="step-connector">
+            <div class="connector-line"></div>
+            <div class="connector-dot"></div>
+          </div>
+
+          <div class="step-card" data-step="2">
+            <div class="step-badge">STAGE 02</div>
+            <div class="step-icon-wrap">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            </div>
+            <h3 class="step-title">2. Understand Strategy</h3>
+            <p class="step-desc">
+              Extract the underlying physics, fluid dynamics, or structural chemistry without mimicking non-essential organic attributes.
+            </p>
+            <div class="step-footer">
+              <span class="metric-label">Key Focus:</span>
+              <span class="metric-val">Physical Principles</span>
+            </div>
+          </div>
+
+          <div class="step-connector">
+            <div class="connector-line"></div>
+            <div class="connector-dot"></div>
+          </div>
+
+          <div class="step-card" data-step="3">
+            <div class="step-badge">STAGE 03</div>
+            <div class="step-icon-wrap">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            </div>
+            <h3 class="step-title">3. Adapt &amp; Create</h3>
+            <p class="step-desc">
+              Synthesize scalable engineering hardware, zero-waste manufacturing pipelines, and energy-conserving industrial architectures.
+            </p>
+            <div class="step-footer">
+              <span class="metric-label">Key Focus:</span>
+              <span class="metric-val">Scalable Engineering</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Benchmark Examples Drawer -->
+        <div class="interactive-examples-bar">
+          <span class="bar-title">Historical Benchmark Case:</span>
+          <div class="benchmark-tabs">
+            <button class="b-tab active" data-case="kingfisher">Kingfisher ➔ Shinkansen Bullet Train</button>
+            <button class="b-tab" data-case="shark">Shark Denticles ➔ Riblet Aerodynamics</button>
+            <button class="b-tab" data-case="termite">Termite Mounds ➔ Passive HVAC Architecture</button>
+          </div>
+          <div class="b-tab-content" id="benchmark-display-content">
+            <strong>Kingfisher Beak to Shinkansen Train:</strong> Eiji Nakatsu modeled the train's nose after the kingfisher's beak, which dives from air to water with zero splash. Result: 10% faster, 15% less electricity, and eliminated sonic boom tunnel shockwaves.
+          </div>
+        </div>
+
+        <!-- Core Philosophy Quote -->
+        <div class="quote-card">
+          <div class="quote-mark">“</div>
+          <p class="quote-text">
+            Biomimicry does not copy nature blindly. It learns from nature's principles.
+          </p>
+          <div class="quote-author">— Janine Benyus, Author &amp; Biomimicry Pioneer</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------- -->
+    <!-- SLIDE 3: WHY BIO-INSPIRED SUSTAINABILITY                -->
+    <!-- ------------------------------------------------------- -->
+    <section class="slide-section" id="slide-why" data-index="2">
+      <div class="slide-inner why-layout">
+        <div class="why-left-content">
+          <div class="section-header">
+            <div class="section-num">02 // THE IMPERATIVE</div>
+            <h2 class="section-title">Why Bio-Inspired Sustainability?</h2>
+            <p class="section-lead">
+              Conventional industry relies on <span class="text-crimson">"Heat, Beat, and Treat"</span>—brute force energy, toxic additives, and synthetic permanence. Nature achieves identical feats at ambient temperature, solar income, and full circularity.
+            </p>
+          </div>
+
+          <!-- 4 Pillars Hoverable Grid -->
+          <div class="pillars-grid">
+            <div class="pillar-card" data-pillar="energy">
+              <div class="pillar-top">
+                <span class="pillar-icon">⚡</span>
+                <span class="pillar-tag tag-crimson">EFFICIENCY</span>
+              </div>
+              <h4 class="pillar-heading">Energy Overconsumption</h4>
+              <p class="pillar-body">
+                Energy-efficient systems reduce consumption at the design level. By mirroring aerodynamic laminar skins and passive thermoregulation, systems cut parasitic drag before motors even power on.
+              </p>
+              <div class="pillar-metric">
+                <span class="mono-num text-green">30–50%</span> Parasitic Power Reduction
+              </div>
+            </div>
+
+            <div class="pillar-card" data-pillar="water">
+              <div class="pillar-top">
+                <span class="pillar-icon">💧</span>
+                <span class="pillar-tag tag-green">RESOURCES</span>
+              </div>
+              <h4 class="pillar-heading">Water Scarcity</h4>
+              <p class="pillar-body">
+                Water-saving technologies collect and manage water smarter. From fog-harvesting desert beetles to tree xylem vascular networks, nature distributes fluids with zero high-pressure pumping.
+              </p>
+              <div class="pillar-metric">
+                <span class="mono-num text-green">0 Watt</span> Passive Moisture Condensation
+              </div>
+            </div>
+
+            <div class="pillar-card" data-pillar="pollution">
+              <div class="pillar-top">
+                <span class="pillar-icon">♻️</span>
+                <span class="pillar-tag tag-green">CIRCULARITY</span>
+              </div>
+              <h4 class="pillar-heading">Pollution &amp; Waste</h4>
+              <p class="pillar-body">
+                Low-waste, sustainable materials inspired by biological structures. Biological manufacturing builds strictly with benign, abundant elements (C, H, O, N, Si) that feed continuous biological loops.
+              </p>
+              <div class="pillar-metric">
+                <span class="mono-num text-green">100%</span> Cradle-to-Cradle Nutrient Cycle
+              </div>
+            </div>
+
+            <div class="pillar-card" data-pillar="climate">
+              <div class="pillar-top">
+                <span class="pillar-icon">🌍</span>
+                <span class="pillar-tag tag-crimson">MINDSET</span>
+              </div>
+              <h4 class="pillar-heading">Climate Change</h4>
+              <p class="pillar-body">
+                Biomimicry asks <em class="highlight-text">"How does nature do it?"</em>, not just how to make extractive technology faster. It transforms carbon from a greenhouse liability into durable structural biocement.
+              </p>
+              <div class="pillar-metric">
+                <span class="mono-num text-green">Net Negative</span> Mineral Carbon Sequestration
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cracked Earth to Living Sprout Visual Canvas -->
+        <div class="why-right-visual">
+          <div class="canvas-panel">
+            <div class="canvas-header-pill">
+              <span class="status-dot pulse-green"></span>
+              <span>Regenerative Resilience Simulation</span>
+            </div>
+            <canvas id="why-regeneration-canvas" width="500" height="500"></canvas>
+            <div class="canvas-controls">
+              <div class="slider-group">
+                <label for="regeneration-slider" class="slider-label">Regeneration Level:</label>
+                <input type="range" id="regeneration-slider" min="0" max="100" value="70" class="styled-slider">
+                <span class="slider-readout mono-num" id="regeneration-readout">70% Reborn</span>
+              </div>
+            </div>
+            <p class="visual-caption">
+              Move slider: Watch arid, cracked industrial earth heal into an interconnected bioluminescent root and sprout canopy.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------- -->
+    <!-- SLIDE 4: CASE STUDY 1: OWL-INSPIRED WIND TURBINES       -->
+    <!-- ------------------------------------------------------- -->
+    <section class="slide-section" id="slide-owl" data-index="3">
+      <div class="slide-inner owl-layout">
+        <div class="owl-left">
+          <div class="section-header">
+            <div class="section-num">03 // CASE STUDY 01</div>
+            <h2 class="section-title">Owl-Inspired Silent Wind Turbines</h2>
+            <p class="section-lead">
+              Acoustic noise is the primary barrier to expanding wind farms near populated communities. By engineering serrated boundary-layer geometries, noise drops dramatically with zero energy loss.
+            </p>
+          </div>
+
+          <!-- Problem vs Nature's Clue Cards -->
+          <div class="contrast-row">
+            <div class="contrast-box box-problem">
+              <div class="box-badge badge-crimson">ENGINEERING BOTTLENECK</div>
+              <h4>Aerodynamic Trailing Turbulence</h4>
+              <p>Traditional turbine blades create massive pressure shear and turbulent vortex shedding at high tip speeds (>250 km/h). Low-frequency acoustic hum triggers community resistance and strict setback limits.</p>
+            </div>
+            <div class="contrast-box box-nature">
+              <div class="box-badge badge-green">NATURE'S SECRET</div>
+              <h4>The Barn Owl (Tyto alba)</h4>
+              <p>Owls hunt in total acoustic silence. Specialized feather structures break up coherent airflow into miniature micro-vortices, eliminating the acoustic pressure wave entirely.</p>
+            </div>
+          </div>
+
+          <!-- Three Distinct Feather Morphologies -->
+          <div class="owl-features-container">
+            <h4 class="features-title">Three Bio-Engineered Aerodynamic Features:</h4>
+            <div class="features-list">
+              <div class="feature-item active" data-feature="serrations">
+                <div class="f-num">01</div>
+                <div class="f-content">
+                  <h5>Leading-Edge Serrations (Combs)</h5>
+                  <p>Stiff comb-like teeth break up incoming laminar gusts into smaller micro-eddies before air detaches.</p>
+                </div>
+              </div>
+              <div class="feature-item" data-feature="fringe">
+                <div class="f-num">02</div>
+                <div class="f-content">
+                  <h5>Porous / Fringed Trailing Edge</h5>
+                  <p>Flexible downy fringes blend upper and lower air flows, preventing sharp pressure differentials at blade exit.</p>
+                </div>
+              </div>
+              <div class="feature-item" data-feature="velvet">
+                <div class="f-num">03</div>
+                <div class="f-content">
+                  <h5>Velvety Down Surface Texture</h5>
+                  <p>Micro-hairs dampen high-frequency acoustic shear vibrations across the boundary layer.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Takeaway Banner -->
+          <div class="takeaway-banner">
+            <div class="takeaway-icon">💡</div>
+            <div class="takeaway-text">
+              <strong>Key Takeaway:</strong> A quieter turbine makes renewable energy easier to integrate into residential communities—a purely passive solution via smarter blade geometry.
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D Interactive Wind Turbine & Noise Simulation -->
+        <div class="owl-right">
+          <div class="simulation-card">
+            <!-- Simulation Mode Switcher -->
+            <div class="sim-mode-toolbar">
+              <span class="sim-toolbar-label">BLADE GEOMETRY:</span>
+              <div class="toggle-switch-container">
+                <button class="blade-toggle-btn" id="btn-smooth-blade" data-mode="smooth">
+                  <span class="mode-dot dot-crimson"></span>
+                  Smooth Blade (Traditional)
+                </button>
+                <button class="blade-toggle-btn active" id="btn-serrated-blade" data-mode="serrated">
+                  <span class="mode-dot dot-green"></span>
+                  Owl-Serrated (Bio-Inspired)
+                </button>
+              </div>
+            </div>
+
+            <!-- Three.js 3D Turbine Viewport -->
+            <div id="turbine-three-container" class="three-viewport">
+              <div class="viewport-hud-overlay">
+                <span class="badge-air-type" id="hud-air-status">LAMINAR MICRO-VORTICES</span>
+                <span class="badge-fps mono-num">60 FPS</span>
+              </div>
+            </div>
+
+            <!-- Live Noise Meter & Sound Wave Oscilloscope -->
+            <div class="telemetry-bar">
+              <div class="noise-meter-col">
+                <div class="meter-label">AERODYNAMIC ACOUSTIC NOISE</div>
+                <div class="db-reading-wrap">
+                  <span class="db-number mono-num" id="db-meter-val">92.2</span>
+                  <span class="db-unit">dB</span>
+                </div>
+                <div class="db-delta-badge" id="db-delta-tag">
+                  ▼ 12.3 dB Noise Reduction
+                </div>
+              </div>
+
+              <!-- Live Sound Wave Canvas -->
+              <div class="oscilloscope-col">
+                <div class="osc-label">ACOUSTIC PRESSURE WAVEFORM</div>
+                <canvas id="soundwave-canvas" width="280" height="60"></canvas>
+                <div class="osc-footer mono-num" id="osc-footer-text">
+                  Peak Amplitude: -18.4 dB // Power: 100%
+                </div>
+              </div>
+
+              <!-- Power / Lift-to-Drag Telemetry -->
+              <div class="performance-col">
+                <div class="perf-metric">
+                  <span class="perf-label">Lift-to-Drag Ratio:</span>
+                  <span class="perf-val text-green mono-num">PRESERVED (99.8%)</span>
+                </div>
+                <div class="perf-metric">
+                  <span class="perf-label">Setback Proximity:</span>
+                  <span class="perf-val text-green mono-num">+65% Closer Permitted</span>
+                </div>
+                <div class="perf-metric">
+                  <span class="perf-label">Power Degradation:</span>
+                  <span class="perf-val mono-num">0.0% (Passive Sieve)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------- -->
+    <!-- SLIDE 5: CASE STUDY 2: DIATOM WATER FILTRATION          -->
+    <!-- ------------------------------------------------------- -->
+    <section class="slide-section" id="slide-diatom" data-index="4">
+      <div class="slide-inner diatom-layout">
+        <div class="diatom-left">
+          <div class="section-header">
+            <div class="section-num">04 // CASE STUDY 02</div>
+            <h2 class="section-title">Diatom-Inspired Water Filtration</h2>
+            <p class="section-lead">
+              Diatoms are microscopic single-celled algae with silica cell walls called <span class="highlight-green">frustules</span>, containing precisely arranged nanoscale pores engineered over millions of years for molecular sieving.
+            </p>
+          </div>
+
+          <!-- Engineering Values Grid -->
+          <div class="diatom-props-grid">
+            <div class="prop-card">
+              <div class="prop-icon">🔬</div>
+              <h4>Hierarchical Porosity</h4>
+              <p>Pores taper from micro to nanoscale straight-through channels, drastically eliminating the tortuous flow resistance found in synthetic polymer membranes.</p>
+            </div>
+            <div class="prop-card">
+              <div class="prop-icon">📐</div>
+              <h4>Surface-to-Volume Ratio</h4>
+              <p>Exceptional surface area density yields massive flux capacity without requiring monster hydraulic high-pressure booster pumps.</p>
+            </div>
+            <div class="prop-card">
+              <div class="prop-icon">⚡</div>
+              <h4>Chemical Tunability</h4>
+              <p>Naturally amorphous hydrated silica (SiO₂) exhibits high negative surface charge, electrostatically repelling synthetic dyes and heavy metals.</p>
+            </div>
+          </div>
+
+          <!-- Live Contaminant Legend & Toggles -->
+          <div class="contaminant-panel">
+            <div class="panel-subtitle">Target Contaminant Particle Streams:</div>
+            <div class="contaminant-tags">
+              <button class="c-tag active" data-type="metals">
+                <span class="c-dot dot-crimson"></span> Heavy Metals (Pb²⁺, Hg²⁺)
+              </button>
+              <button class="c-tag active" data-type="dyes">
+                <span class="c-dot dot-purple"></span> Synthetic Dyes
+              </button>
+              <button class="c-tag active" data-type="plastics">
+                <span class="c-dot dot-orange"></span> Microplastics
+              </button>
+              <button class="c-tag active" data-type="pathogens">
+                <span class="c-dot dot-yellow"></span> Pathogens / Bacteria
+              </button>
+              <button class="c-tag active" data-type="water">
+                <span class="c-dot dot-green"></span> Pure H₂O Molecules
+              </button>
+            </div>
+          </div>
+
+          <!-- Comparative Benchmarks Table -->
+          <div class="filter-metrics-table">
+            <div class="m-row header">
+              <span>Metric</span>
+              <span>Traditional Polymeric RO</span>
+              <span>Diatom Silica Membrane</span>
+            </div>
+            <div class="m-row">
+              <span class="m-name">Pumping Energy</span>
+              <span class="m-bad mono-num">3.5–5.0 kWh / m³</span>
+              <span class="m-good mono-num text-green">2.1 kWh / m³ (-40%)</span>
+            </div>
+            <div class="m-row">
+              <span class="m-name">Rejection Efficiency</span>
+              <span class="mono-num">98.5%</span>
+              <span class="mono-num text-green">99.94%</span>
+            </div>
+            <div class="m-row">
+              <span class="m-name">Bio-Fouling Tendency</span>
+              <span class="m-bad">High (Severe Biofilm)</span>
+              <span class="m-good text-green">Ultra-Low (Passive Silica Anti-Stick)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Multi-Scale Membrane & Particle Canvas -->
+        <div class="diatom-right">
+          <div class="diatom-sim-card">
+            <div class="diatom-sim-top">
+              <div class="zoom-controls">
+                <span class="ctrl-label">SCALE VIEW:</span>
+                <button class="zoom-btn active" id="btn-zoom-nano" data-view="nano">
+                  Nanoscale Pores (Cross-Section)
+                </button>
+                <button class="zoom-btn" id="btn-zoom-frustule" data-view="frustule">
+                  3D Frustule Shell
+                </button>
+              </div>
+              <div class="filter-status-pill">
+                <span class="pulse-green"></span>
+                <span id="diatom-status-text">Active Nanopore Molecular Sieving</span>
+              </div>
+            </div>
+
+            <!-- Nanoscale Filtration Canvas Viewport -->
+            <div class="diatom-canvas-wrapper" id="diatom-canvas-container">
+              <canvas id="diatom-filtration-canvas" width="600" height="420"></canvas>
+            </div>
+
+            <!-- Bottom Live Telemetry HUD -->
+            <div class="diatom-sim-hud">
+              <div class="hud-stat-box">
+                <span class="stat-title">CONTAMINANT REJECTION</span>
+                <span class="stat-number mono-num text-green" id="stat-rejection">99.94%</span>
+              </div>
+              <div class="hud-stat-box">
+                <span class="stat-title">ENERGY REDUCTION</span>
+                <span class="stat-number mono-num text-green" id="stat-energy">-41.8%</span>
+              </div>
+              <div class="hud-stat-box">
+                <span class="stat-title">PORE SIZE CUTOFF</span>
+                <span class="stat-number mono-num text-green" id="stat-pore">15 nm</span>
+              </div>
+              <div class="hud-stat-box">
+                <span class="stat-title">PERMEATE PURITY</span>
+                <span class="stat-number mono-num text-green" id="stat-purity">POTABLE</span>
+              </div>
+            </div>
+
+            <!-- Interactive Sieve Controller -->
+            <div class="diatom-slider-row">
+              <label for="pore-size-slider">Channel Pore Size:</label>
+              <input type="range" id="pore-size-slider" min="5" max="50" value="15" class="styled-slider">
+              <span class="mono-num" id="pore-readout">15 nm</span>
+              <button class="action-btn-sm" id="btn-flush-filter">Flush Retentate</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------- -->
+    <!-- SLIDE 6: SUMMARY, IMPACT & MBA TECH PERSPECTIVE         -->
+    <!-- ------------------------------------------------------- -->
+    <section class="slide-section" id="slide-summary" data-index="5">
+      <div class="slide-inner summary-layout">
+        <div class="section-header text-center">
+          <div class="section-num">05 // STRATEGIC HORIZON</div>
+          <h2 class="section-title">The Biomimetic Future: MBA Tech Perspective</h2>
+          <p class="section-lead max-w-lead">
+            Sustainable engineering is not about compromise or lowering standards—it is about leveraging billions of years of evolved blueprints to achieve superior performance at lower cost and zero environmental footprint.
+          </p>
+        </div>
+
+        <!-- 3 Pillars of Strategic Innovation -->
+        <div class="summary-pillars-row">
+          <div class="s-pillar-card">
+            <div class="s-pillar-badge">PILLAR 1</div>
+            <h3>Passive Geometry Over Brute Energy</h3>
+            <p>From owl serrations to sharkskin riblets, geometry replaces energy. Squeezing aerodynamic and hydraulic resistance out of shapes cuts operational expenditure (OPEX) without complex maintenance hardware.</p>
+            <div class="s-metric">
+              <span class="mono-num text-green">Zero</span> Added Parasitic Energy
+            </div>
+          </div>
+
+          <div class="s-pillar-card">
+            <div class="s-pillar-badge">PILLAR 2</div>
+            <h3>Hierarchical Self-Assembly</h3>
+            <p>Diatoms construct flawless nanoscale silica sieves at room temperature in ambient water. Emulating biological biomineralization eradicates energy-guzzling high-temperature industrial kilns.</p>
+            <div class="s-metric">
+              <span class="mono-num text-green">-60%</span> Embodied Carbon in Manufacturing
+            </div>
+          </div>
+
+          <div class="s-pillar-card">
+            <div class="s-pillar-badge">PILLAR 3</div>
+            <h3>Closed-Loop Circular Economy</h3>
+            <p>In mature ecosystems, "waste equals food." Bio-inspired environmental technologies lay the foundation for circular business models, decoupling industrial GDP growth from resource extraction.</p>
+            <div class="s-metric">
+              <span class="mono-num text-green">100%</span> Cradle-to-Cradle Compatibility
+            </div>
+          </div>
+        </div>
+
+        <!-- Presenter Credits & Interactive Demo Actions -->
+        <div class="summary-footer-card">
+          <div class="credits-left">
+            <div class="credits-avatar-group">
+              <div class="avatar-ring">KS</div>
+              <div class="avatar-ring">MJ</div>
+            </div>
+            <div class="credits-details">
+              <h4>Kamaksha Sharma &amp; Mahim Jain</h4>
+              <p>MBA Tech • Bio-Inspired Sustainability and Environmental Technologies</p>
+              <div class="credits-links">
+                <span class="tag-green">Presentation Complete</span>
+                <span class="tag-divider">•</span>
+                <span class="tag-crimson">Ready for Q&amp;A</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="credits-actions">
+            <button class="action-btn action-btn-green" id="btn-replay-deck">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
+              <span>Restart Presentation</span>
+            </button>
+            <button class="action-btn action-btn-outline" id="btn-jump-owl">
+              <span>Inspect Wind Turbine</span>
+            </button>
+            <button class="action-btn action-btn-outline" id="btn-jump-diatom">
+              <span>Inspect Diatom Filter</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================= -->
+  <!-- BOTTOM FIXED NAVIGATION & CONTROLS                        -->
+  <!-- ========================================================= -->
+  <footer class="hud-bottom-bar" role="contentinfo">
+    <div class="bottom-left">
+      <span class="presenter-tag">Presented by Kamaksha Sharma &amp; Mahim Jain (MBA Tech)</span>
+    </div>
+
+    <div class="bottom-center">
+      <div class="slide-counter-badge" id="slide-counter-display">
+        SLIDE <span class="mono-num" id="current-slide-num">01</span> / <span class="mono-num">06</span>
+      </div>
+    </div>
+
+    <div class="bottom-right">
+      <button class="nav-control-btn" id="btn-prev-slide" aria-label="Previous Slide (Left Arrow)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        <span>PREV</span>
+      </button>
+      <button class="nav-control-btn nav-control-primary" id="btn-next-slide" aria-label="Next Slide (Right Arrow or Space)">
+        <span>NEXT</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </footer>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: SPEAKER NOTES (FOR KAMAKSHA & MAHIM)               -->
+  <!-- ========================================================= -->
+  <div class="modal-backdrop hidden" id="modal-notes" role="dialog" aria-modal="true" aria-labelledby="notes-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <h3 id="notes-title">Presenter Speaking Cues (Kamaksha &amp; Mahim)</h3>
+        </div>
+        <button class="modal-close-btn" id="btn-close-notes" aria-label="Close Notes">&times;</button>
+      </div>
+      <div class="modal-body" id="notes-content">
+        <!-- Dynamically injected based on active slide -->
+      </div>
+      <div class="modal-footer">
+        <span class="key-hint">Press <kbd>N</kbd> or <kbd>ESC</kbd> to toggle notes</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: KEYBOARD SHORTCUTS / PROJECTOR HELP                -->
+  <!-- ========================================================= -->
+  <div class="modal-backdrop hidden" id="modal-help" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <h3 id="help-title">Projector &amp; Presentation Controls</h3>
+        </div>
+        <button class="modal-close-btn" id="btn-close-help" aria-label="Close Help">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="shortcuts-table">
+          <div class="s-row"><kbd>→</kbd> or <kbd>SPACE</kbd> or <kbd>PageDown</kbd><span>Advance to next slide</span></div>
+          <div class="s-row"><kbd>←</kbd> or <kbd>PageUp</kbd><span>Return to previous slide</span></div>
+          <div class="s-row"><kbd>F</kbd><span>Toggle Fullscreen Projector Mode</span></div>
+          <div class="s-row"><kbd>N</kbd><span>Open / Close Presenter Speaking Notes</span></div>
+          <div class="s-row"><kbd>M</kbd><span>Toggle Reduced Motion Mode (60 FPS Safe)</span></div>
+          <div class="s-row"><kbd>T</kbd><span>Toggle Turbine Blade Mode (Slide 4)</span></div>
+          <div class="s-row"><kbd>Z</kbd><span>Toggle Diatom Zoom View (Slide 5)</span></div>
+          <div class="s-row"><kbd>1</kbd> - <kbd>6</kbd><span>Jump directly to Slide 1 through 6</span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <span class="key-hint">Press <kbd>?</kbd> or <kbd>ESC</kbd> to exit help</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/hero-scene.js"></script>
+  <script src="js/why-visual.js"></script>
+  <script src="js/wind-turbine.js"></script>
+  <script src="js/diatom-filter.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+
